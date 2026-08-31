@@ -99,6 +99,16 @@ local TYPE_TEAL = "#53eac4"
 vim.api.nvim_set_hl(0, "String", { fg = YELLOW })
 vim.api.nvim_set_hl(0, "Character", { fg = YELLOW })
 
+-- @variable/Identifier were plain foreground (c.fg) by design in
+-- aether.nvim -- only "special" variable subtypes (@variable.member,
+-- @variable.parameter) got accent colors. The VS Code theme colors plain
+-- "Variables" green (#4fe0a0) though, so imported bindings and other plain
+-- identifiers (e.g. `z`/`dayjs`/`utc` in `import z from 'zod'`) showed up
+-- white in Neovim but green in VS Code. Recolor them to match.
+local GREEN = "#4fe0a0"
+vim.api.nvim_set_hl(0, "@variable", { fg = GREEN })
+vim.api.nvim_set_hl(0, "Identifier", { fg = GREEN })
+
 vim.api.nvim_set_hl(0, "Type", { fg = TYPE_TEAL, bold = true, italic = true })
 vim.api.nvim_set_hl(0, "StorageClass", { fg = TYPE_TEAL, italic = true })
 vim.api.nvim_set_hl(0, "Structure", { fg = TYPE_TEAL, italic = true })
