@@ -46,11 +46,16 @@ apart, in both Neovim and VS Code.
 
 Omarchy strips any top-level `.lua` file (and `vscode.json`) from themes
 installed via `omarchy theme install <url>`, because a git-installed theme
-is treated as untrusted code. Since this theme's Neovim integration relies on
-`neovim.lua`, installing it the standard way means **you won't get the
-Neovim colorscheme automatically**. To get full functionality:
+is treated as untrusted code. This theme's Neovim colorscheme itself
+(`nvim-colorscheme/colors/not-so-much-hackerman.lua`) is a *nested* file and
+survives a standard install just fine -- but `neovim.lua` at the top level
+(which tells LazyVim to actually use that colorscheme) does not. Installing
+the standard way therefore gives you the terminal/Hyprland/UI palette
+immediately, but **the Neovim colorscheme won't apply automatically** unless
+you also do one of:
 
 ```bash
+# Option A: install without a .git folder, so nothing gets stripped
 git clone git@github.com:HcDuller/omarchy-not-so-much-hackerman-theme.git /tmp/not-so-much-hackerman
 cp -r /tmp/not-so-much-hackerman ~/.config/omarchy/themes/not-so-much-hackerman
 rm -rf ~/.config/omarchy/themes/not-so-much-hackerman/.git
@@ -58,21 +63,13 @@ rm -rf /tmp/not-so-much-hackerman
 omarchy theme set "not-so-much-hackerman"
 ```
 
-Because there's no `.git` directory left inside
-`~/.config/omarchy/themes/not-so-much-hackerman`, Omarchy treats it as a
-theme you authored yourself, so nothing gets stripped.
-
-### Alternative: via the Omarchy menu / `omarchy theme install`
-
+```bash
+# Option B: installed via the menu already? Just add neovim.lua yourself --
+# files you add locally on top of an installed theme are never stripped.
+curl -o ~/.config/omarchy/themes/not-so-much-hackerman/neovim.lua \
+  https://raw.githubusercontent.com/HcDuller/omarchy-not-so-much-hackerman-theme/master/neovim.lua
+omarchy theme set "not-so-much-hackerman"
 ```
-Install > Style > Theme
-```
-and paste the repo URL. This works and gives you the terminal/Hyprland/UI
-palette immediately, but **the Neovim colorscheme will not apply
-automatically** (see above). If you install this way and still want the
-Neovim fix, copy `neovim.lua` and `nvim-colorscheme/` from this repo into
-`~/.config/omarchy/themes/not-so-much-hackerman/` yourself afterward --
-files you add locally on top of an installed theme are never stripped.
 
 ### VS Code (manual step, required either way)
 
@@ -87,24 +84,36 @@ ln -s ~/.config/omarchy/themes/not-so-much-hackerman/vscode-extension \
 Then reload VS Code (`Developer: Reload Window`) and select **Not So Much
 Hackerman** from the theme picker if it isn't applied automatically.
 
-## Known limitation: switching to this theme in an already-running Neovim
+## Live hot-reload in Neovim (optional, local-machine only)
 
-The Neovim colorscheme is served by a local `lazy.nvim` plugin spec pointing
-at `~/.local/state/omarchy/current/theme/nvim-colorscheme` (the currently
-staged theme). `lazy.nvim` only discovers/registers plugin specs once, at
-startup -- it doesn't add a brand-new plugin name to a running session's
-registry. Omarchy's stock themes work around this by pre-registering every
-built-in colorscheme plugin up front in `all-themes.lua`, so hot-swapping
-between *those* works instantly; this theme isn't (and can't be) part of
-that list, since its `dir` only contains valid content while it's the
-active theme.
-
-Practical effect: if you run `omarchy theme set "not-so-much-hackerman"` (or
-switch via the menu) while a Neovim session that predates the switch is
-still open, that session may report `Cannot find color scheme
+By default, switching to this theme while a Neovim session that predates
+the switch is still open may report `Cannot find color scheme
 "not-so-much-hackerman"` if you try `:colorscheme not-so-much-hackerman`
-manually. **A new Neovim instance started after the switch will always load
-it correctly.** Just restart Neovim once after switching to this theme.
+manually -- `lazy.nvim` only discovers plugin specs at startup, and this
+theme's colorscheme plugin isn't known to a session that started before the
+switch. **A new Neovim instance started after the switch always loads it
+correctly**, so this only matters if you want theme switches to apply live,
+without restarting Neovim.
+
+Omarchy's own bundled themes avoid this by pre-registering every built-in
+colorscheme plugin up front in `~/.config/nvim/lua/plugins/all-themes.lua`.
+You can do the same for this theme -- since that file lives outside this
+repo (it's your own Neovim config, not something an Omarchy theme can ship),
+add this entry yourself once, alongside the existing ones:
+
+```lua
+{
+  "not-so-much-hackerman-colorscheme",
+  dir = vim.fn.expand("~/.config/omarchy/themes/not-so-much-hackerman/nvim-colorscheme"),
+  dependencies = { "bjarneo/aether.nvim" },
+  lazy = true,
+  priority = 1000,
+},
+```
+
+After adding this once, switching to (or away from and back to) this theme
+via `omarchy theme set` or the Omarchy menu will hot-reload instantly in any
+already-open Neovim session, exactly like the built-in themes.
 
 ## Preview
 
