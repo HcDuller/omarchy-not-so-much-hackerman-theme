@@ -87,6 +87,25 @@ ln -s ~/.config/omarchy/themes/not-so-much-hackerman/vscode-extension \
 Then reload VS Code (`Developer: Reload Window`) and select **Not So Much
 Hackerman** from the theme picker if it isn't applied automatically.
 
+## Known limitation: switching to this theme in an already-running Neovim
+
+The Neovim colorscheme is served by a local `lazy.nvim` plugin spec pointing
+at `~/.local/state/omarchy/current/theme/nvim-colorscheme` (the currently
+staged theme). `lazy.nvim` only discovers/registers plugin specs once, at
+startup -- it doesn't add a brand-new plugin name to a running session's
+registry. Omarchy's stock themes work around this by pre-registering every
+built-in colorscheme plugin up front in `all-themes.lua`, so hot-swapping
+between *those* works instantly; this theme isn't (and can't be) part of
+that list, since its `dir` only contains valid content while it's the
+active theme.
+
+Practical effect: if you run `omarchy theme set "not-so-much-hackerman"` (or
+switch via the menu) while a Neovim session that predates the switch is
+still open, that session may report `Cannot find color scheme
+"not-so-much-hackerman"` if you try `:colorscheme not-so-much-hackerman`
+manually. **A new Neovim instance started after the switch will always load
+it correctly.** Just restart Neovim once after switching to this theme.
+
 ## Preview
 
 > The theme preview screenshot (`preview.png`) still shows stock Hackerman
